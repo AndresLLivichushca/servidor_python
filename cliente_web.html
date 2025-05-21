@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cliente WebSocket</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #chat { width: 100%; height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    #mensaje { width: 80%; }
+    #nombre { width: 40%; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Chat WebSocket (Cliente Web)</h2>
+
+  <input type="text" id="nombre" placeholder="Ingresa tu apodo">
+  <button onclick="conectar()">Conectar</button>
+
+  <div id="chat"></div>
+
+  <input type="text" id="mensaje" placeholder="Escribe un mensaje">
+  <button onclick="enviarMensaje()">Enviar</button>
+
+  <script>
+    let socket;
+    let apodo = "";
+
+    function conectar() {
+      apodo = document.getElementById("nombre").value.trim();
+      if (!apodo) {
+        alert("Debes ingresar un apodo");
+        return;
+      }
+
+      // Cambia esta IP si estás en otra máquina
+      socket = new WebSocket("ws://localhost:8765");
+
+      socket.onopen = () => {
+        agregarMensaje("🟢 Conectado al servidor.");
+        socket.send(`${apodo} se ha unido al chat.`);
+      };
+
+      socket.onmessage = (event) => {
+        agregarMensaje("📩 " + event.data);
+      };
+
+      socket.onclose = () => {
+        agregarMensaje("🔌 Conexión cerrada.");
+      };
+
+      socket.onerror = (error) => {
+        agregarMensaje("❌ Error: " + error.message);
+      };
+    }
+
+    function enviarMensaje() {
+      const mensaje = document.getElementById("mensaje").value.trim();
+      if (mensaje && socket && socket.readyState === WebSocket.OPEN) {
+        const mensajeFormateado = `${apodo}: ${mensaje}`;
+        socket.send(mensajeFormateado);
+        agregarMensaje("🧑 Tú: " + mensaje); // Mostrarlo de inmediato
+        document.getElementById("mensaje").value = "";
+      }
+    }
+
+    function agregarMensaje(msg) {
+      const chat = document.getElementById("chat");
+      chat.innerHTML += msg + "<br>";
+      chat.scrollTop = chat.scrollHeight;
+    }
+  </script>
+</body>
+</html>
